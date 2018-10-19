@@ -14,6 +14,11 @@ namespace MyShogiSoundPlayer.Manager
 
         public void Play(WaveFile file, string playId)
         {
+            lock (_playing)
+            {
+                _playing.Add(playId);
+            }
+
             Task task = new Task(() => PlayAsync(file, playId));
             task.Start();
         }
@@ -28,11 +33,6 @@ namespace MyShogiSoundPlayer.Manager
 
         private void PlayAsync(WaveFile file, string playId)
         {
-            lock (_playing)
-            {
-                _playing.Add(playId);
-            }
-
             _player.Play(file);
 
             lock (_playing)
