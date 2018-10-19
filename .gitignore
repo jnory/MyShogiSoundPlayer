@@ -1,4 +1,5 @@
 .idea
-external/NUnit.3.11.0/
 bin
 obj
+external/NUnit.3.11.0/
+external/ILRepack.2.0.16/
