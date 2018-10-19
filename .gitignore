@@ -1,1 +1,4 @@
 .idea
+external/NUnit.3.11.0/
+bin
+obj
