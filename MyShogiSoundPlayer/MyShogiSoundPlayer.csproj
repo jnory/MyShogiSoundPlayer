@@ -39,10 +39,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command\Command.cs" />
+    <Compile Include="Command\CommandParser.cs" />
+    <Compile Include="Command\CommandType.cs" />
+    <Compile Include="Manager\FileManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sound\Player.cs" />
     <Compile Include="Sound\WaveFile.cs" />
+    <Compile Include="Manager\PlayManager.cs" />
     <ProjectReference Include="..\external\libsoundio-sharp\libsoundio-sharp\libsoundio-sharp.csproj">
       <Project>{D6FB7880-23D7-44B7-827E-A471BA354D92}</Project>
       <Name>libsoundio-sharp</Name>

@@ -29,6 +29,7 @@ namespace MyShogiSoundPlayer.Sound
             WaveData = wav.Data;
             SamplingRate = fmt.SamplingRate;
             NumChannels = fmt.NumChannels;
+            Path = path;
         }
 
         private static byte[] readFile(string path)
@@ -51,6 +52,7 @@ namespace MyShogiSoundPlayer.Sound
         public short [] WaveData;
         public uint SamplingRate;
         public ushort NumChannels;
+        public string Path { get; }
     }
 
     /*

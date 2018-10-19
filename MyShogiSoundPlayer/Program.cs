@@ -1,42 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using MyShogiSoundPlayer.Command;
+using MyShogiSoundPlayer.Manager;
 using MyShogiSoundPlayer.Sound;
 
 namespace MyShogiSoundPlayer
 {
-    class FileManager
-    {
-        public FileManager(string path)
-        {
-            _entries = new HashSet<string>(
-                Directory.GetFiles(path, "*.wav", SearchOption.AllDirectories));
-            _files = new Dictionary<string, WaveFile>();
-        }
-
-        public WaveFile Load(string path)
-        {
-            if (!_entries.Contains(path))
-            {
-                return null;
-            }
-
-            try
-            {
-                return _files[path];
-            }
-            catch (KeyNotFoundException)
-            {
-                var file = new WaveFile(path);
-                _files[path] = file;
-                return file;
-            }
-        }
-
-        private HashSet<string> _entries;
-        private Dictionary<string, WaveFile> _files;
-    }
-
     internal class Program
     {
         public static void Main(string[] args)
@@ -47,26 +15,47 @@ namespace MyShogiSoundPlayer
                 Environment.Exit(1);
             }
 
-            var manager = new FileManager(args[0]);
-            Listen(manager);
+            var fileManager = new FileManager(args[0]);
+            Listen(fileManager);
         }
 
         private static void Listen(FileManager manager)
         {
-            var player = new Player();
+            var playManager = new PlayManager();
+
             var line = Console.ReadLine();
             while (line != null)
             {
-                line = line.Trim();
-                if (line == "exit")
+                var command = CommandParser.Parse(line);
+                if (command.Type == CommandType.Exit)
                 {
                     break;
                 }
 
-                var file = manager.Load(line);
-                if (file != null)
+                switch (command.Type)
                 {
-                    player.Play(file);
+                    case CommandType.Play:
+                        var file = manager.Load(command.Args[1]);
+                        if (file != null)
+                        {
+                            playManager.Play(file, command.Args[0]);
+                        }
+
+                        break;
+                    case CommandType.IsPlaying:
+                        if (playManager.IsPlaying(command.Args[0]))
+                        {
+                            Console.WriteLine("yes");
+                        }
+                        else
+                        {
+                            Console.WriteLine("no");
+                        }
+
+                        break;
+                    case CommandType.Release:
+                        manager.Release(command.Args[0]);
+                        break;
                 }
 
                 line = Console.ReadLine();
