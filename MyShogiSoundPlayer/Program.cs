@@ -43,7 +43,7 @@ namespace MyShogiSoundPlayer
         {
             if (args.Length != 1)
             {
-                Console.WriteLine("Usage: SoundServer.exe [sound dir]");
+                Console.WriteLine("Usage: SoundPlayer.exe [sound dir]");
                 Environment.Exit(1);
             }
 
