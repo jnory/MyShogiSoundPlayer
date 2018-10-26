@@ -29,6 +29,7 @@ namespace MyShogiSoundPlayer.Sound
             WaveData = wav.Data;
             SamplingRate = fmt.SamplingRate;
             NumChannels = fmt.NumChannels;
+	    SoundMiliSec = wav.ChunkSize * 1000 / fmt.BytesPerSec;
             Path = path;
         }
 
@@ -52,6 +53,7 @@ namespace MyShogiSoundPlayer.Sound
         public short [] WaveData;
         public uint SamplingRate;
         public ushort NumChannels;
+	public uint SoundMiliSec { get; }
         public string Path { get; }
     }
 
@@ -186,7 +188,7 @@ namespace MyShogiSoundPlayer.Sound
 
         public ushort NumChannels { get; }
         public uint SamplingRate { get; }
-        private uint BytesPerSec;
+        public uint BytesPerSec { get; }
         private ushort BlockAlign;
 
         // 0x10 = (16bit 前提)
@@ -228,7 +230,7 @@ namespace MyShogiSoundPlayer.Sound
         }
 
         private char[] FormatCheck;
-        private uint ChunkSize;
+        public uint ChunkSize { get; }
 
         // FormatChunkのBitsPerSampleが16のとき符号付きshort型
         public short[] Data { get; }
