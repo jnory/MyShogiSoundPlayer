@@ -67,6 +67,10 @@ namespace MyShogiSoundPlayer.Sound
             outStream.Open();
             outStream.Start();
 
+            #if MACOS
+            // Linuxの場合この待ち方だと最後まで鳴り終わる前にループを抜けてしまう。
+            // macだと最後まで鳴る
+            // 理由がわからない…
             for (; ;)
             {
                 api.FlushEvents();
@@ -76,7 +80,11 @@ namespace MyShogiSoundPlayer.Sound
                     break;
                 }
             }
-
+            #elif LINUX
+            // macの場合Sleepで待つとなぜかノイズが乗ってしまう。
+            // この待ち方でいいのかよくわからないのであくまで暫定(もうちょっとよく調べて直す)
+            Thread.Sleep((int)(file.SoundMiliSec * 1.5));
+            #endif
             outStream.Dispose();
             device.RemoveReference();
             api.Dispose();
@@ -88,8 +96,12 @@ namespace MyShogiSoundPlayer.Sound
             ref int count, ref bool finish, short[] data)
         {
             var framesLeft = frameCountMax;
+            if (count >= data.Length)
+            {
+                finish = true;
+            }
 
-            for (; !finish; )
+            for (; count < data.Length; )
             {
                 var frameCount = framesLeft;
                 var results = outStream.BeginWrite(ref frameCount);
@@ -112,7 +124,6 @@ namespace MyShogiSoundPlayer.Sound
                     }
                     if (count >= data.Length)
                     {
-                        finish = true;
                         break;
                     }
 
@@ -121,7 +132,7 @@ namespace MyShogiSoundPlayer.Sound
                 outStream.EndWrite();
 
                 framesLeft -= frameCount;
-                if (framesLeft <= 0 || finish)
+                if (framesLeft <= 0)
                     break;
             }
         }
