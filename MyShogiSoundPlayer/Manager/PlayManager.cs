@@ -33,12 +33,15 @@ namespace MyShogiSoundPlayer.Manager
 
         private void PlayAsync(WaveFile file, string playId)
         {
-            _player.Play(file);
-
-            lock (_playing)
+            _player.Play(file, () =>
             {
-                _playing.Remove(playId);
-            }
+                lock (_playing)
+                {
+                    _playing.Remove(playId);
+                }
+
+                return true;
+            });
         }
 
         public void Debug()

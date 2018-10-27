@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using SoundIOSharp;
 
@@ -38,7 +39,7 @@ namespace MyShogiSoundPlayer.Sound
         /// <summary>
         /// サウンドを再生する。
         /// </summary>
-        public void Play(WaveFile file)
+        public void Play(WaveFile file, Func<bool> callback)
         {
             var api = new SoundIO();
             api.Connect();
@@ -80,10 +81,13 @@ namespace MyShogiSoundPlayer.Sound
                     break;
                 }
             }
+            callback();
             #elif LINUX
             // macの場合Sleepで待つとなぜかノイズが乗ってしまう。
             // この待ち方でいいのかよくわからないのであくまで暫定(もうちょっとよく調べて直す)
-            Thread.Sleep((int)(file.SoundMiliSec * 1.5));
+            Thread.Sleep((int)file.SoundMiliSec);
+            callback();
+            Thread.Sleep((int)(file.SoundMiliSec * 0.5));
             #endif
 
             outStream.Dispose();
