@@ -85,6 +85,7 @@ namespace MyShogiSoundPlayer.Sound
             // この待ち方でいいのかよくわからないのであくまで暫定(もうちょっとよく調べて直す)
             Thread.Sleep((int)(file.SoundMiliSec * 1.5));
             #endif
+
             outStream.Dispose();
             device.RemoveReference();
             api.Dispose();
@@ -126,7 +127,6 @@ namespace MyShogiSoundPlayer.Sound
                     {
                         break;
                     }
-
                 }
 
                 outStream.EndWrite();
@@ -135,6 +135,64 @@ namespace MyShogiSoundPlayer.Sound
                 if (framesLeft <= 0)
                     break;
             }
+        }
+
+        public void Debug()
+        {
+            var api = new SoundIO();
+            api.Connect();
+            api.FlushEvents();
+
+            System.Console.Error.WriteLine("# of output device: {0}", api.OutputDeviceCount);
+            for (var i = 0; i < api.OutputDeviceCount; i++)
+            {
+                System.Console.Error.WriteLine("=== Handling Device {0} ===", i);
+                var device = api.GetOutputDevice(i);
+                if (device == null || device.ProbeError != 0)
+                {
+                    System.Console.Error.WriteLine("Failed to get device {0}", i);
+                    continue;
+                }
+
+                System.Console.Error.WriteLine("Device Name: {0}", device.Name);
+
+                System.Console.Error.WriteLine("Current Format: {0}", device.CurrentFormat);
+                System.Console.Error.WriteLine("Detecting Device Supporting Format:");
+                if (device.SupportsFormat (SoundIODevice.Float32NE)) {
+                    System.Console.Error.WriteLine("Float32NE");
+                } else if (device.SupportsFormat (SoundIODevice.Float64NE)) {
+                    System.Console.Error.WriteLine("Float64NE");
+                } else if (device.SupportsFormat (SoundIODevice.S32NE)) {
+                    System.Console.Error.WriteLine("S32NE");
+                } else if (device.SupportsFormat (SoundIODevice.S16NE)) {
+                    System.Console.Error.WriteLine("S16NE");
+                } else {
+                    System.Console.Error.WriteLine("UnknownFormat");
+                }
+
+                System.Console.Error.WriteLine("OtherFormat:");
+                foreach (var f in device.Formats)
+                {
+                    System.Console.Error.WriteLine(f);
+                }
+
+                System.Console.Error.WriteLine("Current Layout: {0}", device.CurrentLayout.Name);
+                System.Console.Error.WriteLine("OtherLayout:");
+                foreach (var l in device.Layouts)
+                {
+                    System.Console.Error.WriteLine(l.Name);
+                }
+
+                System.Console.Error.WriteLine("Mono is Null: {0}", SoundIOChannelLayout.GetDefault(1).IsNull);
+                System.Console.Error.WriteLine("Supports Sample Rate 44100: {0}", device.SupportsSampleRate(44100));
+
+                device.RemoveReference();
+            }
+
+            System.Console.Error.WriteLine("Default OutputDevice: {0}", api.DefaultOutputDeviceIndex);
+
+            api.Dispose();
+            System.Console.Error.WriteLine("");
         }
     }
 }

@@ -41,6 +41,11 @@ namespace MyShogiSoundPlayer.Manager
             }
         }
 
+        public void Debug()
+        {
+            _player.Debug();
+        }
+
         private Player _player;
         private HashSet<string> _playing;
     }

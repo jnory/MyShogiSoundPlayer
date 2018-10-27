@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Threading;
 using MyShogiSoundPlayer.Command;
 using MyShogiSoundPlayer.Manager;
-using MyShogiSoundPlayer.Sound;
 
 namespace MyShogiSoundPlayer
 {
@@ -9,14 +9,57 @@ namespace MyShogiSoundPlayer
     {
         public static void Main(string[] args)
         {
-            if (args.Length != 1)
+            if (args.Length != 1 && args.Length != 2)
             {
                 Console.WriteLine("Usage: SoundPlayer.exe [sound dir]");
                 Environment.Exit(1);
             }
 
-            var fileManager = new FileManager(args[0]);
-            Listen(fileManager);
+            FileManager fileManager;
+            bool debug = false;
+            if (args[0] == "--debug")
+            {
+                fileManager = new FileManager(args[1]);
+                debug = true;
+            }
+            else
+            {
+                fileManager = new FileManager(args[0]);
+                if (args.Length == 2 && args[1] == "--debug")
+                {
+                    debug = true;
+                }
+            }
+
+            if (debug)
+            {
+                StartDebugMode(fileManager);
+            }
+            else
+            {
+                Listen(fileManager);
+            }
+        }
+
+        private static void StartDebugMode(FileManager fileManager)
+        {
+            fileManager.Debug();
+
+            var example = fileManager.GetExampleFile();
+            var playManager = new PlayManager();
+            if (example != "")
+            {
+                var file = fileManager.Load(example);
+                if (file != null)
+                {
+                    Console.Error.WriteLine("Start Playing {0}", file.Path);
+                    playManager.Play(file, "1");
+                    Console.Error.WriteLine("Done Playing");
+                }
+            }
+
+            playManager.Debug();
+            Thread.Sleep(1000);
         }
 
         private static void Listen(FileManager manager)

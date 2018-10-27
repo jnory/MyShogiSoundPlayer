@@ -29,7 +29,7 @@ namespace MyShogiSoundPlayer.Sound
             WaveData = wav.Data;
             SamplingRate = fmt.SamplingRate;
             NumChannels = fmt.NumChannels;
-	    SoundMiliSec = wav.ChunkSize * 1000 / fmt.BytesPerSec;
+            SoundMiliSec = wav.ChunkSize * 1000 / fmt.BytesPerSec;
             Path = path;
         }
 
@@ -53,7 +53,7 @@ namespace MyShogiSoundPlayer.Sound
         public short [] WaveData;
         public uint SamplingRate;
         public ushort NumChannels;
-	public uint SoundMiliSec { get; }
+        public uint SoundMiliSec { get; }
         public string Path { get; }
     }
 
