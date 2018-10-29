@@ -42,7 +42,7 @@ namespace MyShogiSoundPlayer.Sound
         public void Play(WaveFile file, Func<bool> callback)
         {
             var api = new SoundIO();
-            api.Connect();
+            api.ConnectBackend(SoundIOBackend.PulseAudio);
             api.FlushEvents();
             var device = api.GetOutputDevice(api.DefaultOutputDeviceIndex);
             if (device == null || device.ProbeError != 0)

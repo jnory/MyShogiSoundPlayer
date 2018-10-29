@@ -62,6 +62,14 @@ namespace MyShogiSoundPlayer.Manager
             return "";
         }
 
+        public string[] GetFilePaths()
+        {
+            string[] ret = new string[_entries.Count];
+            _entries.CopyTo(ret);
+            return ret;
+        }
+
+
         private readonly string _path;
         private readonly HashSet<string> _entries;
         private readonly Dictionary<string, WaveFile> _files;

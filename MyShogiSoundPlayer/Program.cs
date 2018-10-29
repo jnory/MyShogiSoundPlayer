@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using MyShogiSoundPlayer.Command;
 using MyShogiSoundPlayer.Manager;
@@ -7,33 +10,47 @@ namespace MyShogiSoundPlayer
 {
     internal class Program
     {
+
+        private static string parseArgs(string[] args, out bool debug, out bool aggressive)
+        {
+            HashSet<string> argSet = new HashSet<string>();
+            foreach (var arg in args)
+            {
+                argSet.Add(arg);
+            }
+
+            debug = argSet.Contains("--debug");
+            debug = debug || argSet.Contains("--debug-aggressive");
+            aggressive = argSet.Contains("--debug-aggressive");
+
+            argSet.Remove("--debug");
+            argSet.Remove("--debug-aggressive");
+
+            if (argSet.Count != 1)
+            {
+                return "";
+            }
+
+            var dirName = argSet.ToArray()[0];
+            return dirName;
+        }
+
         public static void Main(string[] args)
         {
-            if (args.Length != 1 && args.Length != 2)
+            FileManager fileManager;
+            bool debug;
+            bool aggressive;
+            var dirName = parseArgs(args, out debug, out aggressive);
+            if (dirName == "")
             {
                 Console.WriteLine("Usage: SoundPlayer.exe [sound dir]");
                 Environment.Exit(1);
             }
 
-            FileManager fileManager;
-            bool debug = false;
-            if (args[0] == "--debug")
-            {
-                fileManager = new FileManager(args[1]);
-                debug = true;
-            }
-            else
-            {
-                fileManager = new FileManager(args[0]);
-                if (args.Length == 2 && args[1] == "--debug")
-                {
-                    debug = true;
-                }
-            }
-
+            fileManager = new FileManager(dirName);
             if (debug)
             {
-                StartDebugMode(fileManager);
+                StartDebugMode(fileManager, aggressive);
             }
             else
             {
@@ -41,24 +58,48 @@ namespace MyShogiSoundPlayer
             }
         }
 
-        private static void StartDebugMode(FileManager fileManager)
+        private static void StartDebugMode(FileManager fileManager, bool aggressive)
         {
             fileManager.Debug();
 
-            var example = fileManager.GetExampleFile();
             var playManager = new PlayManager();
-            if (example != "")
+            playManager.Debug();
+
+            if (aggressive)
             {
-                var file = fileManager.Load(example);
-                if (file != null)
+                var filePaths = fileManager.GetFilePaths();
+                var i = 0;
+                foreach (var path in filePaths)
                 {
-                    Console.Error.WriteLine("Start Playing {0}", file.Path);
-                    playManager.Play(file, "1");
-                    Console.Error.WriteLine("Done Playing");
+                    Console.Error.WriteLine("Playing {0}", path);
+                    var file = fileManager.Load(path);
+                    while (playManager.IsPlaying(i.ToString()))
+                    {
+                        Thread.Sleep(10);
+                    }
+
+                    if (file != null)
+                    {
+                        i++;
+                        playManager.Play(file, i.ToString());
+                    }
+                }
+            }
+            else
+            {
+                var example = fileManager.GetExampleFile();
+                if (example != "")
+                {
+                    var file = fileManager.Load(example);
+                    if (file != null)
+                    {
+                        Console.Error.WriteLine("Start Playing {0}", file.Path);
+                        playManager.Play(file, "1");
+                        Console.Error.WriteLine("Done Playing");
+                    }
                 }
             }
 
-            playManager.Debug();
             Thread.Sleep(1000);
         }
 
