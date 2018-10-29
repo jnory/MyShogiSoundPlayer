@@ -67,15 +67,11 @@ namespace MyShogiSoundPlayer.Sound
             var count = 0;
             var finish = false;
             outStream.WriteCallback = (_, max) => WriteCallback(
-                outStream, max, ref count, ref finish, file.WaveData, file.NumChannels);
-
+                outStream, max, ref count, file.WaveData, file.NumChannels);
+            outStream.UnderflowCallback = () => UnderflowCallback(out finish);
             outStream.Open();
             outStream.Start();
 
-            #if MACOS
-            // Linuxの場合この待ち方だと最後まで鳴り終わる前にループを抜けてしまう。
-            // macだと最後まで鳴る
-            // 理由がわからない…
             for (; ;)
             {
                 api.FlushEvents();
@@ -86,29 +82,23 @@ namespace MyShogiSoundPlayer.Sound
                 }
             }
             callback();
-            #elif LINUX
-            // macの場合Sleepで待つとなぜかノイズが乗ってしまう。
-            // この待ち方でいいのかよくわからないのであくまで暫定(もうちょっとよく調べて直す)
-            Thread.Sleep((int)file.SoundMiliSec);
-            callback();
-            Thread.Sleep((int)(file.SoundMiliSec * 0.5));
-            #endif
 
             outStream.Dispose();
             device.RemoveReference();
             api.Dispose();
         }
 
+        private static void UnderflowCallback(out bool finish)
+        {
+            finish = true;
+        }
+
         private static unsafe void WriteCallback(
             SoundIOOutStream outStream,
             int frameCountMax,
-            ref int count, ref bool finish, short[] data, int numChannels)
+            ref int count, short[] data, int numChannels)
         {
             var framesLeft = frameCountMax;
-            if (count >= data.Length)
-            {
-                finish = true;
-            }
 
             for (; count < data.Length; )
             {
