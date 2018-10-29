@@ -67,7 +67,7 @@ namespace MyShogiSoundPlayer.Sound
             var count = 0;
             var finish = false;
             outStream.WriteCallback = (_, max) => WriteCallback(
-                outStream, max, ref count, ref finish, file.WaveData);
+                outStream, max, ref count, ref finish, file.WaveData, file.NumChannels);
 
             outStream.Open();
             outStream.Start();
@@ -102,7 +102,7 @@ namespace MyShogiSoundPlayer.Sound
         private static unsafe void WriteCallback(
             SoundIOOutStream outStream,
             int frameCountMax,
-            ref int count, ref bool finish, short[] data)
+            ref int count, ref bool finish, short[] data, int numChannels)
         {
             var framesLeft = frameCountMax;
             if (count >= data.Length)
@@ -122,10 +122,20 @@ namespace MyShogiSoundPlayer.Sound
 
                 for (var frame = 0; frame < frameCount; frame += 1)
                 {
-                    var sample = (double)(data[count]) / short.MaxValue;
-                    count++;
                     for (var channel = 0; channel < layout.ChannelCount; channel += 1)
                     {
+                        var sample = (double)(data[count]) / short.MaxValue;
+                        if (numChannels == 1)
+                        {
+                            if (channel + 1 == layout.ChannelCount)
+                            {
+                                count++;
+                            }
+                        }
+                        else
+                        {
+                            count++;
+                        }
                         var area = results.GetArea(channel);
                         var buf = (float*) area.Pointer;
                         *buf = (float) sample;
