@@ -42,7 +42,11 @@ namespace MyShogiSoundPlayer.Sound
         public void Play(WaveFile file, Func<bool> callback)
         {
             var api = new SoundIO();
+            #if LINUX
             api.ConnectBackend(SoundIOBackend.PulseAudio);
+            #else
+            api.Connect();
+            #endif
             api.FlushEvents();
             var device = api.GetOutputDevice(api.DefaultOutputDeviceIndex);
             if (device == null || device.ProbeError != 0)
@@ -144,7 +148,11 @@ namespace MyShogiSoundPlayer.Sound
         public void Debug()
         {
             var api = new SoundIO();
+            #if LINUX
+            api.ConnectBackend(SoundIOBackend.PulseAudio);
+            #else
             api.Connect();
+            #endif
             api.FlushEvents();
 
             System.Console.Error.WriteLine("# of output device: {0}", api.OutputDeviceCount);
