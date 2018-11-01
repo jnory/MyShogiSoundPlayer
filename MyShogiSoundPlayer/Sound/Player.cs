@@ -67,8 +67,10 @@ namespace MyShogiSoundPlayer.Sound
             var count = 0;
             var finish = false;
             outStream.WriteCallback = (_, max) => WriteCallback(
-                outStream, max, ref count, file.WaveData, file.NumChannels);
+                outStream, max, ref count, ref finish, file.WaveData, file.NumChannels);
+            #if LINUX
             outStream.UnderflowCallback = () => UnderflowCallback(out finish);
+            #endif
             outStream.Open();
             outStream.Start();
 
@@ -88,61 +90,66 @@ namespace MyShogiSoundPlayer.Sound
             api.Dispose();
         }
 
+        #if LINUX
         private static void UnderflowCallback(out bool finish)
         {
             finish = true;
         }
+        #endif
 
         private static unsafe void WriteCallback(
             SoundIOOutStream outStream,
             int frameCountMax,
-            ref int count, short[] data, int numChannels)
+            ref int count, ref bool finish, short[] data, int numChannels)
         {
-            var framesLeft = frameCountMax;
-
-            for (; count < data.Length; )
+            if (count >= data.Length || frameCountMax == 0)
             {
-                var frameCount = framesLeft;
-                var results = outStream.BeginWrite(ref frameCount);
+                #if MACOS
+                finish = true;
+                #endif
+                return;
+            }
 
-                if (frameCount == 0)
-                    break;
+            var frameCount = frameCountMax;
+            var results = outStream.BeginWrite(ref frameCount);
 
-                SoundIOChannelLayout layout = outStream.Layout;
+            SoundIOChannelLayout layout = outStream.Layout;
 
-                for (var frame = 0; frame < frameCount; frame += 1)
+            for (var frame = 0; frame < frameCount; frame++)
+            {
+                for (var channel = 0; channel < layout.ChannelCount; channel++)
                 {
-                    for (var channel = 0; channel < layout.ChannelCount; channel += 1)
-                    {
-                        var sample = (double)(data[count]) / short.MaxValue;
-                        if (numChannels == 1)
-                        {
-                            if (channel + 1 == layout.ChannelCount)
-                            {
-                                count++;
-                            }
-                        }
-                        else
-                        {
-                            count++;
-                        }
-                        var area = results.GetArea(channel);
-                        var buf = (float*) area.Pointer;
-                        *buf = (float) sample;
-                        area.Pointer += area.Step;
-                    }
+                    float sample;
                     if (count >= data.Length)
                     {
-                        break;
+                        sample = 0.0f;
+                    }
+                    else
+                    {
+                        sample = (float)data[count] / short.MaxValue;
+                    }
+
+                    var area = results.GetArea(channel);
+
+                    var buf = (float*) area.Pointer;
+                    *buf = sample;
+
+                    area.Pointer += area.Step;
+
+                    if (numChannels == 1 && channel + 1 == layout.ChannelCount)
+                    {
+                        count++;
+                    } else if (numChannels > 1 && layout.ChannelCount == 1)
+                    {
+                        count += numChannels;
+                    } else if (numChannels > 1)
+                    {
+                        count++;
                     }
                 }
-
-                outStream.EndWrite();
-
-                framesLeft -= frameCount;
-                if (framesLeft <= 0)
-                    break;
             }
+
+            outStream.EndWrite();
         }
 
         public void Debug()
@@ -196,6 +203,7 @@ namespace MyShogiSoundPlayer.Sound
                 }
 
                 System.Console.Error.WriteLine("Mono is Null: {0}", SoundIOChannelLayout.GetDefault(1).IsNull);
+                System.Console.Error.WriteLine("Stereo is Null: {0}", SoundIOChannelLayout.GetDefault(2).IsNull);
                 System.Console.Error.WriteLine("Supports Sample Rate 44100: {0}", device.SupportsSampleRate(44100));
 
                 device.RemoveReference();
