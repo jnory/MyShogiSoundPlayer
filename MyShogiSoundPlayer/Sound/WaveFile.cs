@@ -1,4 +1,5 @@
 using System;
+using System.Data.Common;
 using System.IO;
 
 namespace MyShogiSoundPlayer.Sound
@@ -88,6 +89,14 @@ namespace MyShogiSoundPlayer.Sound
             ushort ret = (ushort) (v2 << 8);
             ret += v1;
             return ret;
+        }
+
+        public static short buildShort(byte v1, byte v2)
+        {
+            uint data = 0x10000;
+            uint bits = (uint) (v2 << 8);
+            bits += v1;
+            return (short)-(short)(data - bits);
         }
 
     }
@@ -215,8 +224,10 @@ namespace MyShogiSoundPlayer.Sound
 
             Data = new short[ChunkSize / 2];
 
-            // (注意) リトルエンディアンを仮定しているのでビッグエンディアンのCPUで動かすと多分バグります。
-            Buffer.BlockCopy(data, (int) p + 8, Data, 0, (int) ChunkSize);
+            for (var i = 0; i < Data.Length; i++)
+            {
+                Data[i] = ParseUtil.buildShort(data[p + 8 + 2 * i], data[p + 8 + 2 * i + 1]);
+            }
         }
 
         public bool Valid()
