@@ -61,7 +61,7 @@ namespace MyShogiSoundPlayer.Sound
             }
             outStream.SoftwareLatency = 0.0;
             outStream.SampleRate = (int) file.SamplingRate;
-            outStream.Layout = SoundIOChannelLayout.GetDefault(file.NumChannels);
+            outStream.Layout = SoundIOChannelLayout.GetDefault(1);
             outStream.Format = SoundIODevice.Float32NE;
 
             var count = 0;
