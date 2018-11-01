@@ -73,16 +73,17 @@ namespace MyShogiSoundPlayer
                 {
                     Console.Error.WriteLine("Playing {0}", path);
                     var file = fileManager.Load(path);
-                    while (playManager.IsPlaying(i.ToString()))
-                    {
-                        Thread.Sleep(10);
-                    }
-
                     if (file != null)
                     {
                         i++;
                         playManager.Play(file, i.ToString());
                     }
+
+                    while (playManager.IsPlaying(i.ToString()))
+                    {
+                        Thread.Sleep(10);
+                    }
+
                 }
             }
             else
