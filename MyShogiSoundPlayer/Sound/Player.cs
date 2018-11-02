@@ -80,12 +80,6 @@ namespace MyShogiSoundPlayer.Sound
             SoundIOOutStream outStream)
         {
             outStream.Pause(true);
-            /*
-            if (finish && komaFinish)
-            {
-                outStream.ClearBuffer();
-            }
-            */
         }
         #endif
 
