@@ -101,6 +101,7 @@ namespace MyShogiSoundPlayer.Sound
             _finish = false;
             _outStream.Pause(false);
             Thread.Sleep((int)file.SoundMiliSec);
+            _api.FlushEvents();
         }
 
         private static unsafe void WriteCallback(
@@ -112,7 +113,16 @@ namespace MyShogiSoundPlayer.Sound
                 return;
             }
 
+            #if LINUX
+            var frameCount = Math.Min(data.Length - count, frameCountMax);
+            if (frameCount < 1000)
+            {
+                frameCount = 1000;
+            }
+            #else
             var frameCount = Math.Min(data.Length, frameCountMax);
+            #endif
+
             var results = outStream.BeginWrite(ref frameCount);
 
             SoundIOChannelLayout layout = outStream.Layout;
