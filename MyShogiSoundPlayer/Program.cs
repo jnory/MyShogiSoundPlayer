@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using MyShogiSoundPlayer.Command;
@@ -69,8 +68,14 @@ namespace MyShogiSoundPlayer
             {
                 var filePaths = fileManager.GetFilePaths();
                 var i = 0;
+                var komas = new List<string>();
                 foreach (var path in filePaths)
                 {
+                    if (path.Contains("koma"))
+                    {
+                        komas.Add(path);
+                    }
+
                     Console.Error.WriteLine("Playing {0}", path);
                     var file = fileManager.Load(path);
                     if (file != null)
@@ -79,6 +84,14 @@ namespace MyShogiSoundPlayer
                         playManager.Play(file, i.ToString());
                     }
 
+                    var j = 0;
+                    foreach (var koma in komas)
+                    {
+                        var komafile = fileManager.Load(koma);
+                        playManager.Play(komafile, "a" + i.ToString() + j.ToString());
+                        j++;
+                        break;
+                    }
                     while (playManager.IsPlaying(i.ToString()))
                     {
                         Thread.Sleep(10);
@@ -94,14 +107,18 @@ namespace MyShogiSoundPlayer
                     var file = fileManager.Load(example);
                     if (file != null)
                     {
-                        Console.Error.WriteLine("Start Playing {0}", file.Path);
-                        playManager.Play(file, "1");
-                        Console.Error.WriteLine("Done Playing");
+                        for (var i = 0; i < 10; i++)
+                        {
+                            Console.Error.WriteLine("Start Playing {0} {1}", file.Path, i);
+                            playManager.Play(file, i.ToString());
+                            Console.Error.WriteLine("Done Playing");
+                        }
                     }
                 }
             }
 
             Thread.Sleep(1000);
+            playManager.Dispose();
         }
 
         private static void Listen(FileManager manager)
@@ -144,7 +161,9 @@ namespace MyShogiSoundPlayer
                 }
 
                 line = Console.ReadLine();
+                Thread.Sleep(10);
             }
+            playManager.Dispose();
         }
     }
 }

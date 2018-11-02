@@ -1,63 +1,97 @@
 using System;
 using System.Collections.Generic;
-using System.Security.AccessControl;
 using System.Threading.Tasks;
 using MyShogiSoundPlayer.Sound;
 
 namespace MyShogiSoundPlayer.Manager
 {
-    public class PlayManager
+    public class PlayManager: IDisposable
     {
         public PlayManager()
         {
-            _player = new Player();
             _playing = new Dictionary<string, DateTime>();
+            _lockObjectKoma = new object();
+            _lockObjectYomi = new object();
+        }
+
+        public void Dispose()
+        {
+            _player?.Dispose();
+            _komaPlayer?.Dispose();
         }
 
         public void Play(WaveFile file, string playId)
         {
             var now = DateTime.Now;
             var timeout = now.AddMilliseconds(file.SoundMiliSec + 100);
+            var isKoma = file.Path.Contains("koma");
+            Task task;
             lock (_playing)
             {
                 _playing.Add(playId, timeout);
             }
 
-            Task task = new Task(() => PlayAsync(file, playId));
-            task.Start();
+            if (isKoma)
+            {
+                task = new Task(() => PlayAsyncKoma(file, playId));
+                lock (_lockObjectKoma)
+                {
+                    if (_komaPlayer == null)
+                    {
+                        _komaPlayer = new Player();
+                    }
+                    task.Start();
+                }
+            }
+            else
+            {
+                task = new Task(() => PlayAsyncYomi(file, playId));
+                lock (_lockObjectYomi)
+                {
+                    if (_player == null)
+                    {
+                        _player = new Player();
+                    }
+                    task.Start();
+                }
+            }
+        }
+
+        private void PlayAsyncKoma(WaveFile file, string playId)
+        {
+            lock (_lockObjectKoma)
+            {
+                _komaPlayer.PlayKoma(file);
+            }
+
+            lock (_playing)
+            {
+                _playing.Remove(playId);
+            }
+        }
+
+        private void PlayAsyncYomi(WaveFile file, string playId)
+        {
+            lock (_lockObjectYomi)
+            {
+                _player.Play(file);
+            }
+
+            lock (_playing)
+            {
+                _playing.Remove(playId);
+            }
         }
 
         public bool IsPlaying(string playId)
         {
-            var now = DateTime.Now;
             lock (_playing)
             {
                 var playing = _playing.ContainsKey(playId);
-                if (playing)
-                {
-                    var timeout = _playing[playId];
-                    if (timeout < now)
-                    {
-                        Console.Error.WriteLine("timeout={0}", playId);
-                        _playing.Remove(playId);
-                    }
-                }
                 return playing;
             }
         }
 
-        private void PlayAsync(WaveFile file, string playId)
-        {
-            _player.Play(file, () =>
-            {
-                lock (_playing)
-                {
-                    _playing.Remove(playId);
-                }
-
-                return true;
-            });
-        }
 
         public void Debug()
         {
@@ -65,6 +99,9 @@ namespace MyShogiSoundPlayer.Manager
         }
 
         private Player _player;
+        private Player _komaPlayer;
         private Dictionary<string, DateTime> _playing;
+        private object _lockObjectKoma;
+        private object _lockObjectYomi;
     }
 }

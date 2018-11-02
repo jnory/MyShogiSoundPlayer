@@ -15,8 +15,10 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'macOS|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <OutputPath>bin\macOS\</OutputPath>
@@ -32,6 +34,9 @@
     <DefineConstants>LINUX</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="libsoundio-sharp, Version=1.0.6879.37814, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\external\libsoundio-sharp\libsoundio-sharp\bin\Release\libsoundio-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -47,10 +52,6 @@
     <Compile Include="Sound\Player.cs" />
     <Compile Include="Sound\WaveFile.cs" />
     <Compile Include="Manager\PlayManager.cs" />
-    <ProjectReference Include="..\external\libsoundio-sharp\libsoundio-sharp\libsoundio-sharp.csproj">
-      <Project>{D6FB7880-23D7-44B7-827E-A471BA354D92}</Project>
-      <Name>libsoundio-sharp</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

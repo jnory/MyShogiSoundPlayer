@@ -34,79 +34,103 @@ using SoundIOSharp;
 
 namespace MyShogiSoundPlayer.Sound
 {
-    public class Player
+    public class Player: IDisposable
     {
-        /// <summary>
-        /// サウンドを再生する。
-        /// </summary>
-        public void Play(WaveFile file, Func<bool> callback)
+        public Player()
         {
-            var api = new SoundIO();
+            _api = new SoundIO();
             #if LINUX
-            api.ConnectBackend(SoundIOBackend.PulseAudio);
+            _api.ConnectBackend(SoundIOBackend.PulseAudio);
             #else
-            api.Connect();
+            _api.Connect();
             #endif
-            api.FlushEvents();
-            var device = api.GetOutputDevice(api.DefaultOutputDeviceIndex);
-            if (device == null || device.ProbeError != 0)
+            _api.FlushEvents();
+            _device = _api.GetOutputDevice(_api.DefaultOutputDeviceIndex);
+            if (_device == null || _device.ProbeError != 0)
             {
                 throw new IOException("device not found");
             }
 
-            var outStream = device.CreateOutStream();
-            if (outStream == null)
+            _outStream = _device.CreateOutStream();
+            if (_outStream == null)
             {
                 throw new IOException("failed to create out stream");
             }
-            outStream.SoftwareLatency = 0.0;
-            outStream.SampleRate = (int) file.SamplingRate;
-            outStream.Layout = SoundIOChannelLayout.GetDefault(1);
-            outStream.Format = SoundIODevice.Float32NE;
+            _outStream.SoftwareLatency = 0.0;
+            _outStream.SampleRate = 44100;
+            _outStream.Layout = SoundIOChannelLayout.GetDefault(1);
+            _outStream.Format = SoundIODevice.Float32NE;
 
-            var count = 0;
-            var finish = false;
-            outStream.WriteCallback = (_, max) => WriteCallback(
-                outStream, max, ref count, ref finish, file.WaveData, file.NumChannels);
+            _count = 0;
+            _komaCount = 0;
+            _finish = true;
+            _komaFinish = true;
+            var dummy = new short[100];
+            _data = dummy;
+            _komaData = dummy;
+            _outStream.WriteCallback = (_, max) => WriteCallback(
+                _outStream, max, ref _count, ref _finish, ref _komaFinish, _data, ref _komaData, ref _komaCount, _numChannels, dummy);
             #if LINUX
-            outStream.UnderflowCallback = () => UnderflowCallback(out finish);
+            _outStream.UnderflowCallback = () => UnderflowCallback(_outStream);
             #endif
-            outStream.Open();
-            outStream.Start();
 
-            for (; ;)
-            {
-                api.FlushEvents();
-                Thread.Sleep(1);
-                if (finish)
-                {
-                    break;
-                }
-            }
-            callback();
-
-            outStream.Dispose();
-            device.RemoveReference();
-            api.Dispose();
+            _outStream.Open();
+            _outStream.Start();
         }
 
         #if LINUX
-        private static void UnderflowCallback(out bool finish)
+        private static void UnderflowCallback(
+            SoundIOOutStream outStream)
         {
-            finish = true;
+            outStream.Pause(true);
+            /*
+            if (finish && komaFinish)
+            {
+                outStream.ClearBuffer();
+            }
+            */
         }
         #endif
+
+        public void Dispose()
+        {
+            _outStream.Dispose();
+            _device.RemoveReference();
+            _api.Dispose();
+        }
+
+        /// <summary>
+        /// サウンドを再生する。
+        /// </summary>
+        public void Play(WaveFile file)
+        {
+            _api.FlushEvents();
+            _numChannels = file.NumChannels;
+            _data = file.WaveData;
+            _count = 0;
+            _finish = false;
+            _outStream.Pause(false);
+            Thread.Sleep((int)file.SoundMiliSec);
+        }
+
+        public void PlayKoma(WaveFile file)
+        {
+            _api.FlushEvents();
+            _komaData = file.WaveData;
+            _komaCount = 0;
+            _komaFinish = false;
+            _outStream.Pause(false);
+            Thread.Sleep((int)file.SoundMiliSec);
+        }
 
         private static unsafe void WriteCallback(
             SoundIOOutStream outStream,
             int frameCountMax,
-            ref int count, ref bool finish, short[] data, int numChannels)
+            ref int count, ref bool finish, ref bool komaFinish,
+            short[] data, ref short[] komaData, ref int komaCount, int numChannels, short[] dummy)
         {
-            if (count >= data.Length || frameCountMax == 0)
+            if (komaFinish && finish)
             {
-                #if MACOS
-                finish = true;
-                #endif
                 return;
             }
 
@@ -117,18 +141,38 @@ namespace MyShogiSoundPlayer.Sound
 
             for (var frame = 0; frame < frameCount; frame++)
             {
+                var komaSample = 0.0f;
+                if (!komaFinish && komaData != null && komaCount < komaData.Length)
+                {
+                    komaSample = (float) komaData[komaCount++] / short.MaxValue;
+                    if (komaCount >= komaData.Length)
+                    {
+                        komaData = null;
+                        komaFinish = true;
+                    }
+                }
+
                 for (var channel = 0; channel < layout.ChannelCount; channel++)
                 {
                     float sample;
-                    if (count >= data.Length)
+                    if (finish || data == null || count >= data.Length)
                     {
                         sample = 0.0f;
+                        finish = true;
                     }
                     else
                     {
                         sample = (float)data[count] / short.MaxValue;
                     }
 
+                    sample += komaSample;
+                    if (sample < -1)
+                    {
+                        sample = -1;
+                    } else if (1 < sample)
+                    {
+                        sample = 1;
+                    }
                     var area = results.GetArea(channel);
 
                     var buf = (float*) area.Pointer;
@@ -154,19 +198,11 @@ namespace MyShogiSoundPlayer.Sound
 
         public void Debug()
         {
-            var api = new SoundIO();
-            #if LINUX
-            api.ConnectBackend(SoundIOBackend.PulseAudio);
-            #else
-            api.Connect();
-            #endif
-            api.FlushEvents();
-
-            System.Console.Error.WriteLine("# of output device: {0}", api.OutputDeviceCount);
-            for (var i = 0; i < api.OutputDeviceCount; i++)
+            System.Console.Error.WriteLine("# of output device: {0}", _api.OutputDeviceCount);
+            for (var i = 0; i < _api.OutputDeviceCount; i++)
             {
                 System.Console.Error.WriteLine("=== Handling Device {0} ===", i);
-                var device = api.GetOutputDevice(i);
+                var device = _api.GetOutputDevice(i);
                 if (device == null || device.ProbeError != 0)
                 {
                     System.Console.Error.WriteLine("Failed to get device {0}", i);
@@ -209,10 +245,20 @@ namespace MyShogiSoundPlayer.Sound
                 device.RemoveReference();
             }
 
-            System.Console.Error.WriteLine("Default OutputDevice: {0}", api.DefaultOutputDeviceIndex);
-
-            api.Dispose();
+            System.Console.Error.WriteLine("Default OutputDevice: {0}", _api.DefaultOutputDeviceIndex);
             System.Console.Error.WriteLine("");
         }
+
+        private SoundIO _api;
+        private SoundIODevice _device;
+        private SoundIOOutStream _outStream;
+        private int _numChannels;
+        private short[] _data;
+        private short[] _komaData;
+        private int _count;
+        private int _komaCount;
+
+        private bool _finish;
+        private bool _komaFinish;
     }
 }
