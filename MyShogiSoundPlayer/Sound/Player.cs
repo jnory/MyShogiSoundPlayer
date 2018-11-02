@@ -62,14 +62,11 @@ namespace MyShogiSoundPlayer.Sound
             _outStream.Format = SoundIODevice.Float32NE;
 
             _count = 0;
-            _komaCount = 0;
             _finish = true;
-            _komaFinish = true;
             var dummy = new short[100];
             _data = dummy;
-            _komaData = dummy;
             _outStream.WriteCallback = (_, max) => WriteCallback(
-                _outStream, max, ref _count, ref _finish, ref _komaFinish, _data, ref _komaData, ref _komaCount, _numChannels, dummy);
+                _outStream, max, ref _count, ref _finish, _data, _numChannels, dummy);
             #if LINUX
             _outStream.UnderflowCallback = () => UnderflowCallback(_outStream);
             #endif
@@ -113,49 +110,26 @@ namespace MyShogiSoundPlayer.Sound
             Thread.Sleep((int)file.SoundMiliSec);
         }
 
-        public void PlayKoma(WaveFile file)
-        {
-            _api.FlushEvents();
-            _komaData = file.WaveData;
-            _komaCount = 0;
-            _komaFinish = false;
-            _outStream.Pause(false);
-            Thread.Sleep((int)file.SoundMiliSec);
-        }
-
         private static unsafe void WriteCallback(
-            SoundIOOutStream outStream,
-            int frameCountMax,
-            ref int count, ref bool finish, ref bool komaFinish,
-            short[] data, ref short[] komaData, ref int komaCount, int numChannels, short[] dummy)
+            SoundIOOutStream outStream, int frameCountMax,
+            ref int count, ref bool finish, short[] data, int numChannels, short[] dummy)
         {
-            if (komaFinish && finish)
+            if (finish)
             {
                 return;
             }
 
-            var frameCount = frameCountMax;
+            var frameCount = Math.Min(data.Length, frameCountMax);
             var results = outStream.BeginWrite(ref frameCount);
 
             SoundIOChannelLayout layout = outStream.Layout;
 
             for (var frame = 0; frame < frameCount; frame++)
             {
-                var komaSample = 0.0f;
-                if (!komaFinish && komaData != null && komaCount < komaData.Length)
-                {
-                    komaSample = (float) komaData[komaCount++] / short.MaxValue;
-                    if (komaCount >= komaData.Length)
-                    {
-                        komaData = null;
-                        komaFinish = true;
-                    }
-                }
-
                 for (var channel = 0; channel < layout.ChannelCount; channel++)
                 {
                     float sample;
-                    if (finish || data == null || count >= data.Length)
+                    if (finish || count >= data.Length)
                     {
                         sample = 0.0f;
                         finish = true;
@@ -165,19 +139,9 @@ namespace MyShogiSoundPlayer.Sound
                         sample = (float)data[count] / short.MaxValue;
                     }
 
-                    sample += komaSample;
-                    if (sample < -1)
-                    {
-                        sample = -1;
-                    } else if (1 < sample)
-                    {
-                        sample = 1;
-                    }
                     var area = results.GetArea(channel);
-
                     var buf = (float*) area.Pointer;
                     *buf = sample;
-
                     area.Pointer += area.Step;
 
                     if (numChannels == 1 && channel + 1 == layout.ChannelCount)
@@ -254,11 +218,7 @@ namespace MyShogiSoundPlayer.Sound
         private SoundIOOutStream _outStream;
         private int _numChannels;
         private short[] _data;
-        private short[] _komaData;
         private int _count;
-        private int _komaCount;
-
         private bool _finish;
-        private bool _komaFinish;
     }
 }

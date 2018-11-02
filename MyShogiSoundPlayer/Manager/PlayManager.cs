@@ -61,7 +61,7 @@ namespace MyShogiSoundPlayer.Manager
         {
             lock (_lockObjectKoma)
             {
-                _komaPlayer.PlayKoma(file);
+                _komaPlayer.Play(file);
             }
 
             lock (_playing)
