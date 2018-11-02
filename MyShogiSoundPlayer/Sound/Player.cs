@@ -62,11 +62,10 @@ namespace MyShogiSoundPlayer.Sound
             _outStream.Format = SoundIODevice.Float32NE;
 
             _count = 0;
-            _finish = true;
-            var dummy = new short[100];
-            _data = dummy;
+            _finish = false;
+            _data = new short[1000];
             _outStream.WriteCallback = (_, max) => WriteCallback(
-                _outStream, max, ref _count, ref _finish, _data, _numChannels, dummy);
+                _outStream, max, ref _count, ref _finish, _data, _numChannels);
             #if LINUX
             _outStream.UnderflowCallback = () => UnderflowCallback(_outStream);
             #endif
@@ -106,7 +105,7 @@ namespace MyShogiSoundPlayer.Sound
 
         private static unsafe void WriteCallback(
             SoundIOOutStream outStream, int frameCountMax,
-            ref int count, ref bool finish, short[] data, int numChannels, short[] dummy)
+            ref int count, ref bool finish, short[] data, int numChannels)
         {
             if (finish)
             {
