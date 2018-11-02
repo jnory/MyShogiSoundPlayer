@@ -95,6 +95,10 @@ namespace MyShogiSoundPlayer.Manager
 
         public void Debug()
         {
+            if (_player == null)
+            {
+                _player = new Player();
+            }
             _player.Debug();
         }
 
