@@ -83,20 +83,10 @@ namespace MyShogiSoundPlayer
                         i++;
                         playManager.Play(file, i.ToString());
                     }
-
-                    var j = 0;
-                    foreach (var koma in komas)
-                    {
-                        var komafile = fileManager.Load(koma);
-                        playManager.Play(komafile, "a" + i.ToString() + j.ToString());
-                        j++;
-                        break;
-                    }
                     while (playManager.IsPlaying(i.ToString()))
                     {
                         Thread.Sleep(10);
                     }
-
                 }
             }
             else
@@ -105,15 +95,9 @@ namespace MyShogiSoundPlayer
                 if (example != "")
                 {
                     var file = fileManager.Load(example);
-                    if (file != null)
-                    {
-                        for (var i = 0; i < 10; i++)
-                        {
-                            Console.Error.WriteLine("Start Playing {0} {1}", file.Path, i);
-                            playManager.Play(file, i.ToString());
-                            Console.Error.WriteLine("Done Playing");
-                        }
-                    }
+                    Console.Error.WriteLine("Start Playing {0}", file.Path);
+                    playManager.Play(file, "1");
+                    Console.Error.WriteLine("Done Playing");
                 }
             }
 
