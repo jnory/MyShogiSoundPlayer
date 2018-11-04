@@ -15,6 +15,7 @@ MyShogi.exeと同じフォルダに置いて下さい。
 * gccまたはclang
 * make
 * cmake
+* (Linuxの場合) pulseaudioライブラリ (libpulse)
 * このリポジトリ ( `git clone --recursive` を使ってサブモジュールごとcloneしてください )
 
 ## macOS
