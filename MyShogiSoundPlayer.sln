@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShogiSoundPlayer", "MyShogiSoundPlayer\MyShogiSoundPlayer.csproj", "{DFBDFE47-FB0A-4389-BC7F-3CB7BE30F76B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundPlayer", "SoundPlayer\SoundPlayer.csproj", "{DFBDFE47-FB0A-4389-BC7F-3CB7BE30F76B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using MyShogiSoundPlayer.Command;
-using MyShogiSoundPlayer.Manager;
+using SoundPlayer.Command;
+using SoundPlayer.Manager;
 
-namespace MyShogiSoundPlayer
+namespace SoundPlayer
 {
     internal class Program
     {

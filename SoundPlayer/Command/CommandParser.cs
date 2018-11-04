@@ -1,17 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 
-namespace MyShogiSoundPlayer.Command
+namespace SoundPlayer.Command
 {
     public class CommandParser
     {
-        public static Command Parse(string commandStr)
+        public static SoundPlayer.Command.Command Parse(string commandStr)
         {
             var tokens = Tokenize(commandStr);
             if (tokens.Length == 1 && tokens[0] == "exit")
             {
-                return new Command
+                return new SoundPlayer.Command.Command
                 {
                     Type = CommandType.Exit,
                 };
@@ -21,13 +19,13 @@ namespace MyShogiSoundPlayer.Command
                 switch (tokens[0])
                 {
                     case "is_playing":
-                        return new Command
+                        return new SoundPlayer.Command.Command
                         {
                             Type = CommandType.IsPlaying,
                             Args = new []{tokens[1]},
                         };
                     case "release":
-                        return new Command
+                        return new SoundPlayer.Command.Command
                         {
                             Type = CommandType.Release,
                             Args = new []{tokens[1]},
@@ -36,14 +34,14 @@ namespace MyShogiSoundPlayer.Command
             }
             if (tokens.Length == 3 && tokens[0] == "play")
             {
-                return new Command
+                return new SoundPlayer.Command.Command
                 {
                     Type = CommandType.Play,
                     Args = new []{tokens[1], tokens[2]},
                 };
             }
 
-            return new Command
+            return new SoundPlayer.Command.Command
             {
                 Type = CommandType.Unknown,
             };

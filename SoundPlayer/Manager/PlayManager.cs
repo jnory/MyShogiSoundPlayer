@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using MyShogiSoundPlayer.Sound;
+using SoundPlayer.Sound;
 
-namespace MyShogiSoundPlayer.Manager
+namespace SoundPlayer.Manager
 {
     public class PlayManager: IDisposable
     {

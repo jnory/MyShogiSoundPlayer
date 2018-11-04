@@ -7,8 +7,8 @@
     <ProjectGuid>{DFBDFE47-FB0A-4389-BC7F-3CB7BE30F76B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MyShogiSoundPlayer</RootNamespace>
-    <AssemblyName>MyShogiSoundPlayer</AssemblyName>
+    <RootNamespace>SoundPlayer</RootNamespace>
+    <AssemblyName>SoundPlayer</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
