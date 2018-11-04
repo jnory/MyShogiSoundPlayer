@@ -1,7 +1,7 @@
 LIBSOUNDIO=../external/libsoundio
 
 linux: src/wplay.c src/wplay.h libsoundio_linux/libsoundio.a
-	gcc -shared -fPIC -o libwplay.so src/wplay.c libsoundio_linux/libsoundio.a -I$(LIBSOUNDIO) -DLINUX 
+	gcc -shared -fPIC -o libwplay.so src/wplay.c libsoundio_linux/libsoundio.a -I$(LIBSOUNDIO) -lpulse -DLINUX 
 
 macos: src/wplay.c src/wplay.h libsoundio_macos/libsoundio.a
 	gcc -framework CoreAudio -framework AudioUnit -framework CoreFoundation -dynamiclib -o libwplay.dylib src/wplay.c libsoundio_macos/libsoundio.a -I$(LIBSOUNDIO) -DMACOS 
