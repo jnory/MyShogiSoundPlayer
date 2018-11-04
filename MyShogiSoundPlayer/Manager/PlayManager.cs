@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using MyShogiSoundPlayer.Sound;
 
@@ -7,74 +8,41 @@ namespace MyShogiSoundPlayer.Manager
 {
     public class PlayManager: IDisposable
     {
+        [DllImport("wplay")]
+        static extern unsafe int playSound(
+            short * waveData, uint nData,
+            uint samplingRate, ushort numChannels, uint soundMiliSec);
+
         public PlayManager()
         {
+            Type t = typeof(PlayManager);
+            Marshal.PrelinkAll(t);
             _playing = new Dictionary<string, DateTime>();
-            _lockObjectKoma = new object();
-            _lockObjectYomi = new object();
         }
 
         public void Dispose()
         {
-            _player?.Dispose();
-            _komaPlayer?.Dispose();
         }
 
         public void Play(WaveFile file, string playId)
         {
             var now = DateTime.Now;
             var timeout = now.AddMilliseconds(file.SoundMiliSec + 100);
-            var isKoma = file.Path.Contains("koma");
-            Task task;
             lock (_playing)
             {
                 _playing.Add(playId, timeout);
             }
 
-            if (isKoma)
-            {
-                task = new Task(() => PlayAsyncKoma(file, playId));
-                lock (_lockObjectKoma)
-                {
-                    if (_komaPlayer == null)
-                    {
-                        _komaPlayer = new Player();
-                    }
-                    task.Start();
-                }
-            }
-            else
-            {
-                task = new Task(() => PlayAsyncYomi(file, playId));
-                lock (_lockObjectYomi)
-                {
-                    if (_player == null)
-                    {
-                        _player = new Player();
-                    }
-                    task.Start();
-                }
-            }
+            Task task = new Task(()=>PlayAsync(file, playId));
+            task.Start();
         }
 
-        private void PlayAsyncKoma(WaveFile file, string playId)
+        private unsafe void PlayAsync(WaveFile file, string playId)
         {
-            lock (_lockObjectKoma)
+            fixed (short * waveData = file.WaveData)
             {
-                _komaPlayer.Play(file);
-            }
-
-            lock (_playing)
-            {
-                _playing.Remove(playId);
-            }
-        }
-
-        private void PlayAsyncYomi(WaveFile file, string playId)
-        {
-            lock (_lockObjectYomi)
-            {
-                _player.Play(file);
+                playSound(
+                    waveData, (uint) file.WaveData.Length, file.SamplingRate, file.NumChannels, file.SoundMiliSec);
             }
 
             lock (_playing)
@@ -95,17 +63,8 @@ namespace MyShogiSoundPlayer.Manager
 
         public void Debug()
         {
-            if (_player == null)
-            {
-                _player = new Player();
-            }
-            _player.Debug();
         }
 
-        private Player _player;
-        private Player _komaPlayer;
         private Dictionary<string, DateTime> _playing;
-        private object _lockObjectKoma;
-        private object _lockObjectYomi;
     }
 }
