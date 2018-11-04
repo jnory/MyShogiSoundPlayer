@@ -168,19 +168,11 @@ static void underflowCallback(struct SoundIoOutStream *outStream) {
 }
 #endif
 
-int playSound(
-    int16_t *waveData, 
-    uint32_t nData,
-    uint32_t samplingRate, 
-    uint16_t numChannels,
-    uint32_t soundMiliSec
-) 
-{
-
+struct SoundIo *newSoundIo() {
     struct SoundIo *soundio = soundio_create();
     if(!soundio) {
         fprintf(stderr, "ERROR: failed to get soundio object\n");
-        return 1;
+        return NULL;
     }
 
     enum SoundIoBackend backend;
@@ -196,32 +188,49 @@ int playSound(
     int err = soundio_connect_backend(soundio, backend);
     if (err) {
         fprintf(stderr, "ERROR: Unable to connect to backend: %s\n", soundio_strerror(err));
-        return 1;
+        soundio_destroy(soundio);
+        return NULL;
     }
 
-    soundio_flush_events(soundio); 
-    int device_index = soundio_default_output_device_index(soundio);
+    return soundio;
+}
 
+struct SoundIoDevice *getDevice(struct SoundIo *soundio) {
+    soundio_flush_events(soundio); 
+
+    int device_index = soundio_default_output_device_index(soundio);
     if (device_index < 0) {
         fprintf(stderr, "ERROR: device not found\n");
-        return 1;
+        return NULL;
     }
 
     struct SoundIoDevice *device = soundio_get_output_device(soundio, device_index);
     if(!device) {
         fprintf(stderr, "ERROR: failed to get device; out of memory\n");
-        return 1;
+        return NULL;
     }
 
     if (device-> probe_error) {
         fprintf(stderr, "Cannot probe device: %s\n", soundio_strerror(device->probe_error));
-        return 1;
+        soundio_device_unref(device);
+        return NULL;
     }
 
+    return device;
+}
+
+struct SoundIoOutStream *newOutStream(
+    struct SoundIoDevice *device,
+    int16_t *waveData, 
+    uint32_t nData,
+    uint32_t samplingRate, 
+    uint16_t numChannels,
+    uint32_t soundMiliSec
+) {
     struct SoundIoOutStream *outStream = soundio_outstream_create(device);
     if(!device) {
         fprintf(stderr, "ERROR: failed to create outstream; out of memory\n");
-        return 1;
+        return NULL;
     }
 
     SoundInfo *info = newSoundInfo(waveData, nData, samplingRate, numChannels, soundMiliSec);
@@ -236,10 +245,14 @@ int playSound(
     outStream->sample_rate = samplingRate;
     outStream->software_latency = 0.0f;
 
-    err = soundio_outstream_open(outStream);
+    return outStream;
+}
+
+bool kickStream(struct SoundIoOutStream *outStream) {
+    int err = soundio_outstream_open(outStream);
     if (err) {
         fprintf(stderr, "ERROR: unable to open device: %s", soundio_strerror(err));
-        return 1;
+        return false;
     }
 
     if (outStream->layout_error) {
@@ -247,9 +260,51 @@ int playSound(
     }
 
     err = soundio_outstream_start(outStream);
-#ifdef MACOS
-    soundio_wait_events(soundio);
-#else
+    if (err) {
+        fprintf(stderr, "ERROR: failed to start stream: %s", soundio_strerror(err));
+        return false;
+    }
+
+    return true;
+}
+
+int playSound(
+    int16_t *waveData, 
+    uint32_t nData,
+    uint32_t samplingRate, 
+    uint16_t numChannels,
+    uint32_t soundMiliSec
+) 
+{
+    struct SoundIo *soundio = newSoundIo();
+    if(soundio == NULL) {
+        return 1;
+    }
+
+    struct SoundIoDevice *device = getDevice(soundio);
+    if(device == NULL) {
+        soundio_destroy(soundio);
+        return 1;
+    }
+
+    struct SoundIoOutStream *outStream = newOutStream(
+        device, waveData, nData, samplingRate, numChannels, soundMiliSec);
+    if(outStream == NULL) {
+        soundio_device_unref(device);
+        soundio_destroy(soundio);
+        return 1;
+    }
+
+    SoundInfo *info = (SoundInfo *)outStream->userdata;
+
+    if(!kickStream(outStream)) {
+        soundio_outstream_destroy(outStream);
+        soundio_device_unref(device);
+        soundio_destroy(soundio);
+        deleteSoundInfo(info);
+    }
+
+#ifdef LINUX
     while(true){
         soundio_flush_events(soundio);
         if(info->finished){
@@ -257,11 +312,14 @@ int playSound(
         }
         usleep(1000);
     }
+#else
+    soundio_wait_events(soundio);
 #endif
+
     soundio_outstream_destroy(outStream);
     soundio_device_unref(device);
     soundio_destroy(soundio);
-    
     deleteSoundInfo(info);
+
     return 0;
 }
