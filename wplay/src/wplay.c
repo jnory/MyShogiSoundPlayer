@@ -323,3 +323,57 @@ int playSound(
 
     return 0;
 }
+
+
+void printDebugInfo() {
+    struct SoundIo *soundio = newSoundIo();
+    if(soundio == NULL) {
+        return;
+    }
+    soundio_flush_events(soundio); 
+
+    int n_device = soundio_output_device_count(soundio);
+    for(int i = 0; i < n_device; ++i) {
+        fprintf(stderr, "=== Handling Device %d ===\n", i);
+
+        struct SoundIoDevice *device = soundio_get_output_device(soundio, i);
+        if (device == NULL || device->probe_error != 0) {
+            fprintf(stderr, "Failed to get device %d\n", i);
+            continue;
+        }
+
+        fprintf(stderr, "Device Name: %s\n", device->name);
+        if(soundio_device_supports_format(device, SoundIoFormatFloat32NE)) {
+            fprintf(stderr, "Float32NE\n");
+        } else if (soundio_device_supports_format(device, SoundIoFormatFloat64NE)){
+            fprintf(stderr, "Float64NE\n");
+        } else if (soundio_device_supports_format(device, SoundIoFormatS32NE)){
+            fprintf(stderr, "S32NE\n");
+        } else if (soundio_device_supports_format(device, SoundIoFormatS16NE)){
+            fprintf(stderr, "S16NE\n");
+        } else {
+            fprintf(stderr, "Unknown\n");
+        }
+
+        fprintf(stderr, "OtherFormat:\n");
+        for(int i = 0; i < device->format_count; ++i) {
+            fprintf(stderr, "%s\n", soundio_format_string(device->formats[i]));
+        }
+
+        fprintf(stderr, "Current Layout: %s\n", device->current_layout.name);
+        fprintf(stderr, "Other Layout: \n");
+        for(int i = 0; i < device->layout_count; ++i) {
+            fprintf(stderr, "%s\n", device->layouts[i].name);
+        }
+
+        fprintf(stderr, "Mono is null: %s\n", soundio_channel_layout_get_default(1) == NULL?"true":"false");
+        fprintf(stderr, "Stereo is null: %s\n", soundio_channel_layout_get_default(2) == NULL?"true":"false");
+        fprintf(stderr, "Supports Sample Rate 44100: %s\n", soundio_device_supports_sample_rate(device, 44100)?"true":"false");
+        fprintf(stderr, "Supports Sample Rate 22050: %s\n", soundio_device_supports_sample_rate(device, 22050)?"true":"false");
+
+        soundio_device_unref(device);
+    }
+
+    fprintf(stderr, "Default output device: %d\n", soundio_default_output_device_index(soundio));
+    soundio_destroy(soundio);
+}

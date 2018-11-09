@@ -13,6 +13,9 @@ namespace SoundPlayer.Manager
             short * waveData, uint nData,
             uint samplingRate, ushort numChannels, uint soundMiliSec);
 
+        [DllImport("wplay")]
+        static extern void printDebugInfo();
+
         public PlayManager()
         {
             Type t = typeof(PlayManager);
@@ -59,6 +62,7 @@ namespace SoundPlayer.Manager
 
         public void Debug()
         {
+            printDebugInfo();
         }
 
         private Dictionary<string, DateTime> _playing;

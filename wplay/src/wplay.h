@@ -6,3 +6,4 @@ int playSound(
     uint32_t samplingRate, 
     uint16_t numChannels,
     uint32_t soundmiliSec);
+void printDebugInfo();
