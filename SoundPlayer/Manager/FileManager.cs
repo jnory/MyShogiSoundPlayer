@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
-using MyShogiSoundPlayer.Sound;
+using SoundPlayer.Sound;
 
-namespace MyShogiSoundPlayer.Manager
+namespace SoundPlayer.Manager
 {
     class FileManager
     {

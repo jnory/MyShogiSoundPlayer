@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using MyShogiSoundPlayer.Command;
-using MyShogiSoundPlayer.Manager;
+using SoundPlayer.Command;
+using SoundPlayer.Manager;
 
-namespace MyShogiSoundPlayer
+namespace SoundPlayer
 {
     internal class Program
     {
@@ -68,14 +68,8 @@ namespace MyShogiSoundPlayer
             {
                 var filePaths = fileManager.GetFilePaths();
                 var i = 0;
-                var komas = new List<string>();
                 foreach (var path in filePaths)
                 {
-                    if (path.Contains("koma"))
-                    {
-                        komas.Add(path);
-                    }
-
                     Console.Error.WriteLine("Playing {0}", path);
                     var file = fileManager.Load(path);
                     if (file != null)
@@ -102,7 +96,6 @@ namespace MyShogiSoundPlayer
             }
 
             Thread.Sleep(1000);
-            playManager.Dispose();
         }
 
         private static void Listen(FileManager manager)
@@ -147,7 +140,6 @@ namespace MyShogiSoundPlayer
                 line = Console.ReadLine();
                 Thread.Sleep(10);
             }
-            playManager.Dispose();
         }
     }
 }

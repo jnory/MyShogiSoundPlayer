@@ -1,4 +1,4 @@
-namespace MyShogiSoundPlayer.Command
+namespace SoundPlayer.Command
 {
     public enum CommandType
     {

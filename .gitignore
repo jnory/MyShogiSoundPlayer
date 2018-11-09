@@ -3,3 +3,5 @@ bin
 obj
 external/NUnit.3.11.0/
 external/ILRepack.2.0.16/
+libwplay.so
+libwplay.dylib

@@ -1,8 +1,6 @@
-using System;
-using System.Data.Common;
 using System.IO;
 
-namespace MyShogiSoundPlayer.Sound
+namespace SoundPlayer.Sound
 {
     public class WaveFile
     {
