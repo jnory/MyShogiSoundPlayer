@@ -6,7 +6,7 @@ using SoundPlayer.Sound;
 
 namespace SoundPlayer.Manager
 {
-    public class PlayManager: IDisposable
+    public class PlayManager
     {
         [DllImport("wplay")]
         static extern unsafe int playSound(
@@ -18,10 +18,6 @@ namespace SoundPlayer.Manager
             Type t = typeof(PlayManager);
             Marshal.PrelinkAll(t);
             _playing = new Dictionary<string, DateTime>();
-        }
-
-        public void Dispose()
-        {
         }
 
         public void Play(WaveFile file, string playId)
