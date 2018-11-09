@@ -308,6 +308,7 @@ int playSound(
     while(true){
         soundio_flush_events(soundio);
         if(info->finished){
+            usleep(200);
             break;
         }
         usleep(1000);
