@@ -305,14 +305,8 @@ int playSound(
     }
 
 #ifdef LINUX
-    while(true){
-        soundio_flush_events(soundio);
-        if(info->finished){
-            usleep(200);
-            break;
-        }
-        usleep(1000);
-    }
+    soundio_flush_events(soundio);
+    usleep(soundMiliSec * 1000);
 #else
     soundio_wait_events(soundio);
 #endif
