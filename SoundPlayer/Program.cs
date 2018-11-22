@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using SoundPlayer.Command;
@@ -101,6 +102,11 @@ namespace SoundPlayer
         private static void Listen(FileManager manager)
         {
             var playManager = new PlayManager();
+            if (!playManager.CheckCompatibility())
+            {
+                Console.Error.WriteLine("Unsupported Device");
+                return;
+            }
 
             var line = Console.ReadLine();
             while (line != null)

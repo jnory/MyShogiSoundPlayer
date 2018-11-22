@@ -319,6 +319,25 @@ int playSound(
     return 0;
 }
 
+bool checkCompatibility() {
+    struct SoundIo *soundio = newSoundIo();
+    if(soundio == NULL) {
+        return 1;
+    }
+
+    struct SoundIoDevice *device = getDevice(soundio);
+    if(device == NULL) {
+        soundio_destroy(soundio);
+        return 1;
+    }
+
+    bool ret = soundio_device_supports_format(device, SoundIoFormatFloat32NE);
+
+    soundio_device_unref(device);
+    soundio_destroy(soundio);
+    return ret;
+}
+
 
 void printDebugInfo() {
     struct SoundIo *soundio = newSoundIo();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using SoundPlayer.Sound;
@@ -16,11 +17,19 @@ namespace SoundPlayer.Manager
         [DllImport("wplay")]
         static extern void printDebugInfo();
 
+        [DllImport("wplay")]
+        static extern bool checkCompatibility();
+
         public PlayManager()
         {
             Type t = typeof(PlayManager);
             Marshal.PrelinkAll(t);
             _playing = new Dictionary<string, DateTime>();
+        }
+
+        public bool CheckCompatibility()
+        {
+            return checkCompatibility();
         }
 
         public void Play(WaveFile file, string playId)
