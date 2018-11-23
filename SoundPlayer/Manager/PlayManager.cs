@@ -41,6 +41,7 @@ namespace SoundPlayer.Manager
                 }
                 catch (ArgumentException e)
                 {
+                    Console.Error.WriteLine("duplicate entry: {0} {1}", playId, file.Path);
                     return;
                 }
             }
