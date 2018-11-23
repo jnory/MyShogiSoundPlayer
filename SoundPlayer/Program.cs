@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using SoundPlayer.Command;
@@ -11,7 +10,7 @@ namespace SoundPlayer
     internal class Program
     {
 
-        private static string parseArgs(string[] args, out bool debug, out bool aggressive)
+        private static string ParseArgs(string[] args, out bool debug, out bool aggressive)
         {
             HashSet<string> argSet = new HashSet<string>();
             foreach (var arg in args)
@@ -37,17 +36,14 @@ namespace SoundPlayer
 
         public static void Main(string[] args)
         {
-            FileManager fileManager;
-            bool debug;
-            bool aggressive;
-            var dirName = parseArgs(args, out debug, out aggressive);
+            var dirName = ParseArgs(args, out var debug, out var aggressive);
             if (dirName == "")
             {
                 Console.Error.WriteLine("Usage: SoundPlayer.exe [sound dir]");
                 Environment.Exit(1);
             }
 
-            fileManager = new FileManager(dirName);
+            var fileManager = new FileManager(dirName);
             if (debug)
             {
                 StartDebugMode(fileManager, aggressive);
