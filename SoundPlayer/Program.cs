@@ -43,7 +43,7 @@ namespace SoundPlayer
             var dirName = parseArgs(args, out debug, out aggressive);
             if (dirName == "")
             {
-                Console.WriteLine("Usage: SoundPlayer.exe [sound dir]");
+                Console.Error.WriteLine("Usage: SoundPlayer.exe [sound dir]");
                 Environment.Exit(1);
             }
 

@@ -122,9 +122,13 @@ int32_t max(int32_t a, int32_t b) {
 }
 
 static void writeCallback(struct SoundIoOutStream *outStream, int frameCountMin, int frameCountMax) {
-    SoundInfo *info = (SoundInfo *) outStream->userdata;
+    const struct SoundIoChannelLayout *layout = &outStream->layout;
 
-    int32_t frameCount = min(info->nData - info->count, frameCountMax);
+    SoundInfo *info = (SoundInfo *) outStream->userdata;
+    int32_t frameCount = info->nData - info->count;
+    frameCount -= frameCount % layout->channel_count;
+    frameCount /= layout->channel_count;
+    frameCount = min(frameCount, frameCountMax);
     if(frameCount == 0) {
 #ifdef MACOS
         soundio_wakeup(outStream->device->soundio);
@@ -141,7 +145,6 @@ static void writeCallback(struct SoundIoOutStream *outStream, int frameCountMin,
         return;
     }
 
-    const struct SoundIoChannelLayout *layout = &outStream->layout;
     for(uint32_t frame = 0; frame < frameCount; ++frame) {
         for (uint32_t channel = 0; channel < layout->channel_count; ++channel) {
             float sample = getSample(info, layout->channel_count, channel);

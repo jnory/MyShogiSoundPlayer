@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using SoundPlayer.Sound;
@@ -24,7 +23,7 @@ namespace SoundPlayer.Manager
         {
             Type t = typeof(PlayManager);
             Marshal.PrelinkAll(t);
-            _playing = new Dictionary<string, DateTime>();
+            _playing = new Dictionary<string, bool>();
         }
 
         public bool CheckCompatibility()
@@ -34,11 +33,16 @@ namespace SoundPlayer.Manager
 
         public void Play(WaveFile file, string playId)
         {
-            var now = DateTime.Now;
-            var timeout = now.AddMilliseconds(file.SoundMiliSec + 100);
             lock (_playing)
             {
-                _playing.Add(playId, timeout);
+                try
+                {
+                    _playing.Add(playId, true);
+                }
+                catch (ArgumentException e)
+                {
+                    return;
+                }
             }
 
             Task task = new Task(()=>PlayAsync(file, playId));
@@ -47,7 +51,7 @@ namespace SoundPlayer.Manager
 
         private unsafe void PlayAsync(WaveFile file, string playId)
         {
-            fixed (short * waveData = file.WaveData)
+            fixed (short *waveData = file.WaveData)
             {
                 playSound(
                     waveData, (uint) file.WaveData.Length, file.SamplingRate, file.NumChannels, file.SoundMiliSec);
@@ -68,12 +72,11 @@ namespace SoundPlayer.Manager
             }
         }
 
-
         public void Debug()
         {
             printDebugInfo();
         }
 
-        private Dictionary<string, DateTime> _playing;
+        private Dictionary<string, bool> _playing;
     }
 }
