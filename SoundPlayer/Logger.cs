@@ -9,7 +9,7 @@ namespace SoundPlayer
         {
             if (!string.IsNullOrEmpty(path))
             {
-                _writer = new StreamWriter(path, true);
+                _writer = new StreamWriter(path, false);
             }
             else
             {
