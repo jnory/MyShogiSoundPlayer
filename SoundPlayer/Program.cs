@@ -34,6 +34,12 @@ namespace SoundPlayer
             return dirName;
         }
 
+        private static Logger GetLogger()
+        {
+            var path = Environment.GetEnvironmentVariable("MYSHOGI_SOUNDPLAYER_LOGPATH");
+            return new Logger(path);
+        }
+
         public static void Main(string[] args)
         {
             var dirName = ParseArgs(args, out var debug, out var aggressive);
@@ -97,6 +103,8 @@ namespace SoundPlayer
 
         private static void Listen(FileManager manager)
         {
+            var logger = GetLogger();
+
             var playManager = new PlayManager();
             if (!playManager.CheckCompatibility())
             {
@@ -107,6 +115,8 @@ namespace SoundPlayer
             var line = Console.ReadLine();
             while (line != null)
             {
+                logger.Log(line);
+
                 var command = CommandParser.Parse(line);
                 if (command.Type == CommandType.Exit)
                 {
@@ -126,10 +136,12 @@ namespace SoundPlayer
                     case CommandType.IsPlaying:
                         if (playManager.IsPlaying(command.Args[0]))
                         {
+                            logger.Log("yes");
                             Console.WriteLine("yes");
                         }
                         else
                         {
+                            logger.Log("no");
                             Console.WriteLine("no");
                         }
 
@@ -142,6 +154,8 @@ namespace SoundPlayer
                 line = Console.ReadLine();
                 Thread.Sleep(10);
             }
+
+            logger.Dispose();
         }
     }
 }

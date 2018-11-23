@@ -43,6 +43,7 @@
     <Compile Include="Command\Command.cs" />
     <Compile Include="Command\CommandParser.cs" />
     <Compile Include="Command\CommandType.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Manager\FileManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
